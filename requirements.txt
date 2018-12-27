@@ -1,0 +1,5 @@
+pysistence
+bs4
+aiohttp
+aiofile
+python-magic
