@@ -15,9 +15,16 @@ def error(*args):
     if logger is None:
         setupLogger()
     logger.error(args)
-    print('\033[91m', args, '\033[0m', file=stderr)
+    print('\033[91m', *args, '\033[0m', file=stderr)
 
 def info(*args):
     if logger is None:
         setupLogger()
-    print(args)
+    print(*args)
+
+def debug(*args):
+    from sys import stderr
+    if logger is None:
+        setupLogger()
+    print('\033[93m', *args, '\033[0m', file=stderr)
+

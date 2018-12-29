@@ -10,8 +10,8 @@ def globalConfig():
 
 def parseCLI(argv):
     import argparse
-    from parse import makeDir
     import os
+    import pathlib
     parser = argparse.ArgumentParser(description='Scarpa the scraper.')
     parser.add_argument('--domain', '-d', type=str, default='', help='regex of the main domain')
     parser.add_argument('--url', '-u', type=str, default='', help='initial url to request')
@@ -48,7 +48,7 @@ def parseCLI(argv):
         print('resume this project')
         loadConfig(args['project_dir'])
     else:
-        makeDir(args['project_dir'])
+        pathlib.Path(args['project_dir']).mkdir(parents=True, exist_ok=True)
         global _config
         _config = imm.make_dict(args)
         dumpConfig(args['project_dir'])

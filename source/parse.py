@@ -1,5 +1,7 @@
-from logger import error, info
+from logger import error, info, debug
 from enum import Enum
+
+from config import globalConfig
 
 def parseUrl(url, absUrl):
     assert absUrl.startswith('http://') or absUrl.startswith('https://'), absUrl
@@ -58,10 +60,9 @@ class RespType(Enum):
 
 async def requestUrl(url):
     import aiohttp
-    async with aiohttp.ClientSession(raise_for_status=True) as client_session:
-        async with client_session.get(url, raise_for_status=False) as resp:
+    async with aiohttp.ClientSession() as client_session:
+        async with client_session.get(url) as resp:
             if isHTMLfile(resp.headers):
-                await client_session.close()
                 text = await resp.text()
                 return RespType.PAGE, text
             else:
@@ -87,6 +88,22 @@ def isValidHref(ref):
 def makeDir(path):
     import os
     import pathlib
+    
+    def checkParentDir(path):
+        if path == globalConfig()['project_dir']:
+            return
+        idx = path.rfind('/')
+        if idx <= 0:
+            return
+        else:
+            path = path[:idx]
+        
+        if os.path.exists(path) and os.path.isfile(path):
+            handleFileExists(path)
+            return
+        else:
+            checkParentDir(path)
+
     assert path.rfind('/') > 0, path
     dir = path[:path.rfind('/')]
     if os.path.exists(dir):
@@ -95,15 +112,21 @@ def makeDir(path):
         elif not os.path.isdir(dir):
             raise Exception('is special file')
     else:
+        checkParentDir(dir)
         pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
 
 def handleFileExists(path):
     import os
     import magic
     import aiofile
+    import pathlib
+
+    def isValidHtml(res):
+        return res == 'text/html' or res[:13] == 'HTML document'
+
     assert os.path.isfile(path)
-    if magic.from_file(path) != 'text/html':
-        raise Exception('path is not html file')
+    if not isValidHtml(magic.from_file(path)):
+        raise Exception('path is not html file, path: ' + path)
     tname = '.' + path[path.rfind('/')+1:] + '.tmp'
     os.rename(path, tname)
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
